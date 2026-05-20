@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+sqlalchemy
+aiosqlite
+aiofiles
+reportlab
+pydantic
+python-dotenv

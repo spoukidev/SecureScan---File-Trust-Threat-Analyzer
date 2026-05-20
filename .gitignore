@@ -1,0 +1,14 @@
+node_modules/
+dist/
+frontend/dist/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+backend/uploads/
+backend/securescan.db
+.DS_Store
+Thumbs.db
+*.egg-info/
+.pytest_cache/
