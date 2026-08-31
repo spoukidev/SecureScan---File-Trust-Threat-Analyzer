@@ -8,6 +8,16 @@ SEVERITY_WEIGHTS = {
     "unknown": 5,
 }
 
+SEVERITY_RANK = {
+    "none": 0,
+    "safe": 0,
+    "unknown": 1,
+    "low": 2,
+    "medium": 3,
+    "high": 4,
+    "critical": 5,
+}
+
 ENGINE_WEIGHTS = {
     "static_analysis": 0.20,
     "yara_scanner": 0.25,
@@ -15,6 +25,7 @@ ENGINE_WEIGHTS = {
     "metadata_extractor": 0.10,
     "sandbox": 0.20,
 }
+
 
 def calculate(all_results: dict) -> dict:
     total_deductions = 0.0
@@ -34,16 +45,18 @@ def calculate(all_results: dict) -> dict:
         total_deductions += (base_deduction + additional_deductions * 0.5) * weight
         all_threats.extend(threats)
 
-        engine_deduction = (base_deduction + additional_deductions * 0.5)
+        engine_deduction = base_deduction + additional_deductions * 0.5
         engine_scores[engine_name] = round(max(0, 100 - engine_deduction), 1)
 
     final_score = max(0, round(max_possible - total_deductions, 1))
 
     threat_count = len(all_threats)
-    severity_order = ["critical", "high", "medium", "low", "safe", "none"]
     max_sev = "safe"
     if all_threats:
-        max_sev = max(all_threats, key=lambda t: severity_order.index(t.get("severity", "safe")) if t.get("severity") in severity_order else 99).get("severity", "safe")
+        max_sev = max(
+            (t.get("severity", "unknown") for t in all_threats),
+            key=lambda severity: SEVERITY_RANK.get(severity, SEVERITY_RANK["unknown"]),
+        )
 
     summary = generate_summary(final_score, threat_count, max_sev)
 
@@ -55,6 +68,7 @@ def calculate(all_results: dict) -> dict:
         "engine_scores": engine_scores,
         "all_threats": all_threats,
     }
+
 
 def generate_summary(score: float, threat_count: int, severity: str) -> str:
     if score >= 90:
