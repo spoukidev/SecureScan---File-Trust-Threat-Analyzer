@@ -50,6 +50,37 @@ class ScoringSeverityTests(unittest.TestCase):
 
         self.assertEqual(result["max_severity"], "high")
 
+    def test_engine_severity_is_preserved_without_threat_records(self):
+        result = calculate(
+            {"hash_lookup": {"threats": [], "max_severity": "critical"}}
+        )
+
+        self.assertEqual(result["max_severity"], "critical")
+        self.assertEqual(result["threat_count"], 0)
+        self.assertIn("max engine severity: critical", result["summary"])
+
+    def test_unknown_engine_severity_is_normalized(self):
+        result = calculate(
+            {"static_analysis": {"threats": [], "severity": "unexpected-value"}}
+        )
+
+        self.assertEqual(result["max_severity"], "unknown")
+        self.assertLess(result["trust_score"], 100)
+
+    def test_high_score_summary_does_not_claim_all_indicators_are_low(self):
+        result = calculate(
+            {
+                "metadata_extractor": {
+                    "severity": "safe",
+                    "threats": [{"severity": "unknown", "name": "ambiguous metadata"}],
+                }
+            }
+        )
+
+        self.assertGreaterEqual(result["trust_score"], 90)
+        self.assertIn("max severity: unknown", result["summary"])
+        self.assertNotIn("all low severity", result["summary"])
+
     def test_no_threats_defaults_to_safe(self):
         result = calculate({"hash_lookup": {"threats": [], "severity": "safe"}})
 

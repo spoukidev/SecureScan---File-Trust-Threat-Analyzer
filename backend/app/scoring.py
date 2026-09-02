@@ -27,21 +27,32 @@ ENGINE_WEIGHTS = {
 }
 
 
+def _normalize_severity(severity: str) -> str:
+    return severity if severity in SEVERITY_RANK else "unknown"
+
+
 def calculate(all_results: dict) -> dict:
     total_deductions = 0.0
     max_possible = 100.0
     all_threats = []
+    observed_severities = []
     engine_scores = {}
 
     for engine_name, result in all_results.items():
         weight = ENGINE_WEIGHTS.get(engine_name, 0.15)
         threats = result.get("threats", [])
-        engine_max_sev = result.get("max_severity", result.get("severity", "safe"))
-        base_deduction = SEVERITY_WEIGHTS.get(engine_max_sev, 5)
-
-        additional_deductions = sum(
-            SEVERITY_WEIGHTS.get(t.get("severity", "low"), 5) for t in threats
+        engine_max_sev = _normalize_severity(
+            result.get("max_severity", result.get("severity", "safe"))
         )
+        observed_severities.append(engine_max_sev)
+        base_deduction = SEVERITY_WEIGHTS[engine_max_sev]
+
+        threat_severities = [
+            _normalize_severity(threat.get("severity", "unknown")) for threat in threats
+        ]
+        observed_severities.extend(threat_severities)
+        additional_deductions = sum(SEVERITY_WEIGHTS[severity] for severity in threat_severities)
+
         total_deductions += (base_deduction + additional_deductions * 0.5) * weight
         all_threats.extend(threats)
 
@@ -52,11 +63,8 @@ def calculate(all_results: dict) -> dict:
 
     threat_count = len(all_threats)
     max_sev = "safe"
-    if all_threats:
-        max_sev = max(
-            (t.get("severity", "unknown") for t in all_threats),
-            key=lambda severity: SEVERITY_RANK.get(severity, SEVERITY_RANK["unknown"]),
-        )
+    if observed_severities:
+        max_sev = max(observed_severities, key=lambda severity: SEVERITY_RANK[severity])
 
     summary = generate_summary(final_score, threat_count, max_sev)
 
@@ -72,7 +80,9 @@ def calculate(all_results: dict) -> dict:
 
 def generate_summary(score: float, threat_count: int, severity: str) -> str:
     if score >= 90:
-        return f"File appears safe (Score: {score}/100). {threat_count} potential indicators found, all low severity."
+        if threat_count == 0:
+            return f"File appears safe (Score: {score}/100). No threat indicators were reported; max engine severity: {severity}."
+        return f"File appears mostly safe (Score: {score}/100). {threat_count} potential indicators found, max severity: {severity}."
     elif score >= 70:
         return f"File shows minor suspicious characteristics (Score: {score}/100). {threat_count} indicators found, max severity: {severity}. Review recommended."
     elif score >= 40:
