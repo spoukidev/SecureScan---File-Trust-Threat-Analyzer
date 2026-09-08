@@ -1,7 +1,6 @@
 import os
 import uuid
 import hashlib
-import json
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_db
@@ -13,6 +12,28 @@ from ..schemas import AnalysisResponse, EngineResult
 from pathlib import Path
 
 router = APIRouter()
+UPLOAD_READ_CHUNK_SIZE = 1024 * 1024
+
+
+async def _read_upload_with_limit(file: UploadFile, max_size: int = MAX_FILE_SIZE) -> bytes:
+    """Read an upload without buffering more than max_size + 1 bytes."""
+    chunks = []
+    total = 0
+
+    while True:
+        remaining_with_sentinel = max_size - total + 1
+        chunk = await file.read(min(UPLOAD_READ_CHUNK_SIZE, remaining_with_sentinel))
+        if not chunk:
+            break
+
+        total += len(chunk)
+        if total > max_size:
+            max_size_mb = max_size / (1024 * 1024)
+            raise HTTPException(400, f"File exceeds max size of {max_size_mb:g}MB")
+        chunks.append(chunk)
+
+    return b"".join(chunks)
+
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_file(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
@@ -23,9 +44,7 @@ async def analyze_file(file: UploadFile = File(...), db: AsyncSession = Depends(
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(400, f"File type '{ext}' is not supported")
 
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(400, f"File exceeds max size of 25MB")
+    content = await _read_upload_with_limit(file)
 
     safe_name = f"{uuid.uuid4().hex}{ext}"
     file_path = os.path.join(UPLOAD_DIR, safe_name)
