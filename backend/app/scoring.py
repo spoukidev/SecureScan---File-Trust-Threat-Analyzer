@@ -28,7 +28,11 @@ ENGINE_WEIGHTS = {
 
 
 def _normalize_severity(severity: str) -> str:
-    return severity if severity in SEVERITY_RANK else "unknown"
+    if not isinstance(severity, str):
+        return "unknown"
+
+    normalized = severity.strip().lower()
+    return normalized if normalized in SEVERITY_RANK else "unknown"
 
 
 def calculate(all_results: dict) -> dict:

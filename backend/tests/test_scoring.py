@@ -67,6 +67,28 @@ class ScoringSeverityTests(unittest.TestCase):
         self.assertEqual(result["max_severity"], "unknown")
         self.assertLess(result["trust_score"], 100)
 
+    def test_severity_normalization_handles_case_and_whitespace(self):
+        result = calculate(
+            {
+                "static_analysis": {
+                    "max_severity": " High ",
+                    "threats": [{"severity": " CRITICAL ", "name": "engine finding"}],
+                }
+            }
+        )
+
+        self.assertEqual(result["max_severity"], "critical")
+        self.assertEqual(result["engine_scores"]["static_analysis"], 55.0)
+        self.assertLess(result["trust_score"], 100)
+
+    def test_non_string_severity_is_treated_as_unknown(self):
+        result = calculate(
+            {"sandbox": {"threats": [{"severity": None}], "severity": 5}}
+        )
+
+        self.assertEqual(result["max_severity"], "unknown")
+        self.assertLess(result["trust_score"], 100)
+
     def test_high_score_summary_does_not_claim_all_indicators_are_low(self):
         result = calculate(
             {
