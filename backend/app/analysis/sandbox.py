@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 
@@ -84,8 +83,10 @@ BEHAVIOR_PATTERNS = {
     },
 }
 
+
 async def analyze(file_path: str) -> dict:
-    ext = Path(file_path).suffix.lower()
+    # This stage performs static string-pattern inspection only. It intentionally
+    # never executes an untrusted upload, despite the historical "sandbox" name.
     with open(file_path, "rb") as f:
         raw = f.read()
     text = raw.decode("utf-8", errors="ignore")
@@ -110,6 +111,8 @@ async def analyze(file_path: str) -> dict:
         max_severity = max(behaviors, key=lambda b: severity_order.get(b["severity"], 0))["severity"]
 
     return {
+        "analysis_type": "static_behavior_heuristics",
+        "executed": False,
         "behaviors_detected": len(behaviors),
         "max_severity": max_severity,
         "behaviors": behaviors,
@@ -121,14 +124,17 @@ async def analyze(file_path: str) -> dict:
             }
             for b in behaviors
         ],
-        "would_execute": len(behaviors) > 0,
+        # Kept for API compatibility. Static indicators are not evidence that a
+        # sample would execute successfully in a real sandbox.
+        "would_execute": False,
         "summary": generate_summary(behaviors),
     }
 
+
 def generate_summary(behaviors: list) -> str:
     if not behaviors:
-        return "No suspicious runtime behaviors detected."
+        return "No suspicious static behavior indicators detected."
     parts = []
     for b in behaviors:
         parts.append(f"{b['category']} ({b['severity']}): {b['description']}")
-    return " | ".join(parts)
+    return "Static behavior indicators: " + " | ".join(parts)
