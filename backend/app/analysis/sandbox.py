@@ -83,12 +83,18 @@ BEHAVIOR_PATTERNS = {
     },
 }
 
+MAX_STATIC_SCAN_BYTES = 10 * 1024 * 1024
+
 
 async def analyze(file_path: str) -> dict:
     # This stage performs static string-pattern inspection only. It intentionally
     # never executes an untrusted upload, despite the historical "sandbox" name.
+    # Read a bounded prefix so a very large upload cannot cause an avoidable
+    # memory spike in the API worker.
     with open(file_path, "rb") as f:
-        raw = f.read()
+        raw = f.read(MAX_STATIC_SCAN_BYTES + 1)
+    scan_truncated = len(raw) > MAX_STATIC_SCAN_BYTES
+    raw = raw[:MAX_STATIC_SCAN_BYTES]
     text = raw.decode("utf-8", errors="ignore")
 
     behaviors = []
@@ -113,6 +119,8 @@ async def analyze(file_path: str) -> dict:
     return {
         "analysis_type": "static_behavior_heuristics",
         "executed": False,
+        "bytes_scanned": len(raw),
+        "scan_truncated": scan_truncated,
         "behaviors_detected": len(behaviors),
         "max_severity": max_severity,
         "behaviors": behaviors,
