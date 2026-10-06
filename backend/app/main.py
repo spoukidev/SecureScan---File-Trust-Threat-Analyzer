@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from .database import init_db
 from .routers import upload, reports
+from .config import CORS_ORIGINS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,10 +14,10 @@ app = FastAPI(title="SecureScan API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 app.include_router(upload.router, prefix="/api", tags=["upload"])
