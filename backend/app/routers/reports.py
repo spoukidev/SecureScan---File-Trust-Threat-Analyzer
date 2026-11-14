@@ -7,6 +7,7 @@ from ..models import AnalysisRecord
 from ..schemas import AnalysisResponse, EngineResult
 from typing import List
 from io import BytesIO
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -65,12 +66,15 @@ async def download_report(analysis_id: int, db: AsyncSession = Depends(get_db)):
 
     elements.append(Paragraph(f"SecureScan Analysis Report", styles["Title"]))
     elements.append(Spacer(1, 0.25 * inch))
-    elements.append(Paragraph(f"File: {result.filename}", styles["Heading2"]))
-    elements.append(Paragraph(f"Hash: {result.file_hash}", styles["Normal"]))
+    # Paragraph parses ReportLab markup, and the filename comes from the
+    # uploader. Escape every stored value so names like "x<y.exe" don't crash
+    # the report and tags like <img src="..."> can't be injected.
+    elements.append(Paragraph(f"File: {escape(str(result.filename))}", styles["Heading2"]))
+    elements.append(Paragraph(f"Hash: {escape(str(result.file_hash))}", styles["Normal"]))
     elements.append(Paragraph(f"Score: {result.trust_score}/100", styles["Normal"]))
-    elements.append(Paragraph(f"Threats: {result.threat_count} (Max: {result.max_severity})", styles["Normal"]))
+    elements.append(Paragraph(f"Threats: {result.threat_count} (Max: {escape(str(result.max_severity))})", styles["Normal"]))
     elements.append(Spacer(1, 0.25 * inch))
-    elements.append(Paragraph(f"Summary: {result.summary}", styles["Normal"]))
+    elements.append(Paragraph(f"Summary: {escape(str(result.summary))}", styles["Normal"]))
     elements.append(Spacer(1, 0.25 * inch))
 
     score_color = HexColor("#22c55e") if result.trust_score >= 70 else HexColor("#eab308") if result.trust_score >= 40 else HexColor("#ef4444")
