@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -38,7 +38,7 @@ async def get_result(analysis_id: int, db: AsyncSession = Depends(get_db)):
     )
 
 @router.get("/results")
-async def list_results(limit: int = 20, db: AsyncSession = Depends(get_db)):
+async def list_results(limit: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db)):
     q = select(AnalysisRecord).order_by(AnalysisRecord.created_at.desc()).limit(limit)
     rows = (await db.execute(q)).scalars().all()
     return [
