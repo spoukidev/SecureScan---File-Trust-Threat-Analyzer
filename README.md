@@ -2,6 +2,7 @@
 
 Analyze files for malware, suspicious patterns, and behavioral threats. Upload a file and get a trust score (0–100), threat indicators across 5 analysis engines, and a downloadable PDF report.
 
+[![CI](https://github.com/spoukidev/securescan/actions/workflows/ci.yml/badge.svg)](https://github.com/spoukidev/securescan/actions/workflows/ci.yml)
 ![SecureScan](https://img.shields.io/badge/status-active-success)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![React](https://img.shields.io/badge/react-18-blue)
