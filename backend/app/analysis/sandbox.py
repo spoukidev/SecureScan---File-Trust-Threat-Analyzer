@@ -16,7 +16,7 @@ BEHAVIOR_PATTERNS = {
         "patterns": [
             r"(?:Socket|TcpClient|UdpClient|WebRequest|HttpClient)",
             r"(?:connect|send|recv|listen|accept)\s*\(",
-            r"CreateProcess\s+.*\s+(?:http|ftp|tcp)",
+            r"CreateProcess\s.{0,256}?\s(?:http|ftp|tcp)",
             r"URLDownloadToFile|downloading|upload",
         ],
         "severity": "high",
@@ -36,7 +36,7 @@ BEHAVIOR_PATTERNS = {
         "patterns": [
             r"(?:RegCreate|RegOpen|RegSet|RegDelete|RegQuery)",
             r"(?:SetValue|CreateSubKey|DeleteSubKey|OpenSubKey)",
-            r"(?:HKCU|HKLM|HKEY)[\\/].*[Rr]un",
+            r"(?:HKCU|HKLM|HKEY)[\\/].{0,256}?[Rr]un",
         ],
         "severity": "medium",
         "description": "Registry modifications (potential persistence)",
@@ -56,7 +56,7 @@ BEHAVIOR_PATTERNS = {
             r"(?:IsDebuggerPresent|CheckRemoteDebuggerPresent|NtQueryInformationProcess)",
             r"(?:OutputDebugString|GetTickCount|rdtsc)",
             r"(?:TLS|AntiDebug|Sandboxie|VBox|VMware|VirtualBox)",
-            r"(?:detect|check).*(?:debug|vm|sandbox|analysis)",
+            r"(?:detect|check).{0,256}?(?:debug|vm|sandbox|analysis)",
         ],
         "severity": "high",
         "description": "Anti-analysis / anti-debugging techniques",
@@ -65,7 +65,7 @@ BEHAVIOR_PATTERNS = {
         "patterns": [
             r"(?:AdjustTokenPrivileges|SeDebugPrivilege|SeTakeOwnershipPrivilege)",
             r"(?:OpenProcessToken|LookupPrivilegeValue|EnablePrivilege)",
-            r"(?:runas|RunAs|ShellExecute.*runas)",
+            r"(?:runas|RunAs|ShellExecute.{0,256}?runas)",
             r"(?:UAC|bypass|elevat)",
         ],
         "severity": "high",

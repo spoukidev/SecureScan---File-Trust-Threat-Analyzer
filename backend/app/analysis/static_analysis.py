@@ -14,7 +14,7 @@ SUSPICIOUS_PATTERNS = [
     (r"(?:D|d)ecrypt(?:S|s)tring", 20),
     (r"(?:I|i)nject", 25),
     (r"(?:M|m)imikatz", 40),
-    (r"(?:P|p)owerShell.*(?:-E|nop|bypass)", 30),
+    (r"(?:P|p)owerShell.{0,256}?(?:-E|nop|bypass)", 30),
     (r"(?:R|r)eg (?:add|delete|import)", 15),
     (r"(?:S|s)chtasks", 15),
     (r"(?:W|w)mi (?:c|C)reate", 15),
@@ -111,7 +111,7 @@ def detect_pdf_js(data: bytes) -> dict:
         result["js_indicators"].append("Embedded file found")
     if re.search(r"/AA\s|/OpenAction\s|/Launch\s", text, re.IGNORECASE):
         result["js_indicators"].append("Auto-action trigger found")
-    if re.search(r"/URI\s*\(.*\)", text, re.IGNORECASE):
+    if re.search(r"/URI\s*\([^)\n]{0,2048}\)", text, re.IGNORECASE):
         result["js_indicators"].append("URI action found")
     return result
 

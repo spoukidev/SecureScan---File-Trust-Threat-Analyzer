@@ -9,10 +9,10 @@ BUILTIN_RULES = {
         "description": "Detects suspicious PowerShell patterns including encoded commands and execution policies bypass",
         "severity": "high",
         "patterns": [
-            r"powershell.*-(?:E|Encode|nop|NoP|bypass|Bypass)",
+            r"powershell.{0,256}?-(?:E|Encode|nop|NoP|bypass|Bypass)",
             r"-ExecutionPolicy\s+(?:Bypass|Unrestricted)",
             r"\[System\.Reflection\.Assembly\]::Load",
-            r"IEX\s*\(.*New-Object",
+            r"IEX\s*\(.{0,256}?New-Object",
         ],
     },
     "sus_network": {
@@ -41,7 +41,7 @@ BUILTIN_RULES = {
         "description": "Detects registry and scheduled task persistence mechanisms",
         "severity": "medium",
         "patterns": [
-            r"(?:HKCU|HKLM|HKEY)[\\/].*[Rr]un",
+            r"(?:HKCU|HKLM|HKEY)[\\/].{0,256}?[Rr]un",
             r"schtasks\s+/create",
             r"Startup\s*[Ff]older",
             r"ServiceInstaller|ServiceBase\.Run",
